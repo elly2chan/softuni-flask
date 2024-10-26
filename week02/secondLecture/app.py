@@ -9,7 +9,7 @@ from werkzeug.exceptions import NotFound
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = \
-    f'postgresql://postgres:terminator123@localhost:5432/store'
+    f'postgresql://postgres:test@localhost:5432/store'
 
 
 class Base(DeclarativeBase):
