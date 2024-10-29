@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and Register</title>
+
+    <!-- Toastr CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .toggle {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 10px 0;
+            padding: 20px;
+        }
+
+        .card h3 {
+            margin: 0;
+        }
+
+        .card p {
+            color: #555;
+        }
+
+        #complaints-container {
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Login Form -->
+        <div id="login-form">
+            <h2>Login</h2>
+            <form id="login">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit">Login</button> <!-- Ensure type="submit" is included -->
+            </form>
+            <div class="toggle">
+                <p>Don't have an account? <a href="#" onclick="toggleForms()">Register here</a></p>
+            </div>
+        </div>
+
+        <!-- Register Form -->
+        <div id="register-form" class="hidden">
+            <h2>Register</h2>
+            <form id="register">
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <input type="text" id="register-firstname" placeholder="First Name" required>
+                <input type="text" id="register-lastname" placeholder="Last Name" required>
+                <input type="text" id="register-phone" placeholder="Phone (optional)">
+                <button type="submit">Register</button> <!-- Ensure type="submit" is included -->
+            </form>
+            <div class="toggle">
+                <p>Already have an account? <a href="#" onclick="toggleForms()">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complaints Section -->
+    <div class="container hidden" id="complaints-section">
+        <h2>Complaints</h2>
+        <div id="complaints-container">
+            <!-- Complaints will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": true,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "3000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        function toggleForms() {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('register-form').classList.toggle('hidden');
+        }
+
+        // Handle form submission for login
+        document.getElementById('login').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const data = {
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-password').value
+            };
+
+            fetch('http://127.0.0.1:5000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadComplaints();
+                } else if (response.status >= 400 && response.status < 500) {
+                    return response.json().then(body => {
+                        toastr.error(body.message || 'Login failed');
+                    });
+                } else if (response.status === 500) {
+                    toastr.error('Something went wrong. Please try again later.');
+                }
+            })
+            .catch(error => {
+                toastr.error('Network error. Please try again.');
+            });
+        });
+
+        // Handle form submission for registration
+        document.getElementById('register').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const data = {
+                email: document.getElementById('register-email').value,
+                password: document.getElementById('register-password').value,
+                first_name: document.getElementById('register-firstname').value,
+                last_name: document.getElementById('register-lastname').value,
+                phone: document.getElementById('register-phone').value,
+                role: document.getElementById('register-role').value,
+                certificate: document.getElementById('register-certificate').value || null
+            };
+
+            fetch('http://127.0.0.1:5000/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadComplaints();
+                } else if (response.status >= 400 && response.status < 500) {
+                    return response.json().then(body => {
+                        toastr.error(body.message || 'Registration failed');
+                    });
+                } else if (response.status === 500) {
+                    toastr.error('Something went wrong. Please try again later.');
+                }
+            })
+            .catch(error => {
+                toastr.error('Network error. Please try again.');
+            });
+        });
+
+        // Load complaints after successful login/registration
+        function loadComplaints() {
+            fetch('http://127.0.0.1:5000/complaints', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('complaints-section').classList.remove('hidden');
+                const container = document.getElementById('complaints-container');
+                container.innerHTML = '';
+
+                data.forEach(complaint => {
+                    const card = document.createElement('div');
+                    card.classList.add('card');
+                    card.innerHTML = `
+                        <h3>${complaint.title}</h3>
+                        <p>${complaint.description}</p>
+                    `;
+                    container.appendChild(card);
+                });
+
+                // Hide login and registration forms
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            })
+            .catch(error => {
+                toastr.error('Failed to load complaints.');
+            });
+        }
+    </script>
+
+</body>
+</html>
