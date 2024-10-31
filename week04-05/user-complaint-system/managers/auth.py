@@ -4,7 +4,8 @@ import jwt
 import pytz
 from decouple import config
 from flask_httpauth import HTTPTokenAuth
-from werkzeug.exceptions import Unauthorized
+from werkzeug.exceptions import Unauthorized, NotFound
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from db import db
 from models.user import UserModel
@@ -27,6 +28,17 @@ class AuthManager:
             return info["sub"], info["role"]
         except Exception as ex:
             raise ex
+
+    @staticmethod
+    def change_password(pass_data):
+        user = auth.current_user()
+
+        if not check_password_hash(user.password, pass_data["old_password"]):
+            raise NotFound("Wrong or invalid password")
+        new_password_hash = generate_password_hash(pass_data["new_password"], method="pbkdf2:sha256")
+        db.session.execute(db.update(UserModel).
+                           where(UserModel.id == user.id).
+                           values(password=new_password_hash))
 
 
 auth = HTTPTokenAuth(scheme="Bearer")
